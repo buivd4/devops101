@@ -1,0 +1,2 @@
+#!/bin/bash
+rocket debug $1

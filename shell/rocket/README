@@ -1,0 +1,175 @@
+# Rocket Launch System
+
+A shell script-based rocket launch simulation system that demonstrates bash scripting concepts including variables, command-line arguments, control flow, and functions.
+
+## Overview
+
+This project simulates a rocket launch sequence with multiple stages:
+- Mission creation and rocket registration
+- Power system activation
+- Launch sequence initiation
+- Engine start
+- Lift-off with countdown
+- Status monitoring
+- Debugging capabilities
+
+## Setup
+
+1. Navigate to the rocket directory:
+   ```bash
+   cd shell/rocket
+   ```
+
+2. Source the setup script to add the directory to your PATH:
+   ```bash
+   source setup.sh
+   ```
+   or
+   ```bash
+   . setup.sh
+   ```
+
+   This will:
+   - Add the rocket directory to your PATH
+   - Make all rocket commands executable
+   - Allow you to run commands directly without `./`
+
+   **Note:** You need to run `source setup.sh` each time you open a new terminal, or add it to your `~/.zshrc` or `~/.bashrc` for permanent setup.
+
+## Individual Commands
+
+After setup, you can use these commands directly:
+
+### Basic Commands
+
+- `rocket-add <mission_name>` - Create a new rocket mission
+- `rocket-start-power <mission_name>` - Start power systems
+- `rocket-internal-power <mission_name>` - Activate internal power systems
+- `rocket-start-sequence <mission_name>` - Initiate launch sequence
+- `rocket-start-engine <mission_name>` - Start rocket engine
+- `rocket-lift-off <mission_name>` - Execute lift-off with countdown
+- `rocket-status <mission_name>` - Check mission status
+- `rocket-debug <mission_name>` - Debug failed missions
+
+### Using the Main Rocket Command
+
+You can also use the main `rocket` command with subcommands:
+```bash
+rocket add <mission_name>
+rocket start-power <mission_name>
+rocket internal-power <mission_name>
+rocket start-sequence <mission_name>
+rocket start-engine <mission_name>
+rocket lift-off <mission_name>
+rocket status <mission_name>
+rocket debug <mission_name>
+```
+
+## Automated Launch Scripts
+
+### Single Mission Launch
+
+Use `create-and-launch-rocket` to automatically execute the full launch sequence:
+
+```bash
+create-and-launch-rocket <mission_name>
+```
+
+This script will:
+1. Create a mission directory
+2. Execute all launch stages in sequence
+3. Check the final status
+4. Run debug if the mission failed
+5. Display success message if the mission succeeded
+
+### Multiple Mission Launch
+
+Use `launch-rockets` to launch multiple missions from a file:
+
+```bash
+launch-rockets
+```
+
+This reads mission names from `mission-names.txt` and launches each one sequentially.
+
+## Environment Variables
+
+You can customize the launch behavior using environment variables:
+
+- `COUNT_DOWN` - Seconds for countdown before launch (default: 10)
+- `STATUS_DELAY` - Seconds to wait before setting status (default: 1)
+- `POST_LIFT_OFF_DELAY` - Delay before setting a success state post lift-off (default: 5)
+- `MUST_FAIL` - Set to `"true"` to force launch failure
+- `FAILURE_REASON` - Specify a custom failure reason
+
+### Example with Environment Variables
+
+```bash
+export COUNT_DOWN=5
+export STATUS_DELAY=2
+export MUST_FAIL=true
+create-and-launch-rocket test-mission
+```
+
+## Examples
+
+### Example 1: Launch a Single Mission
+
+```bash
+# Setup (first time only)
+source setup.sh
+
+# Launch a mission
+create-and-launch-rocket mars-mission
+```
+
+### Example 2: Manual Step-by-Step Launch
+
+```bash
+source setup.sh
+
+rocket-add apollo-mission
+rocket-start-power apollo-mission
+rocket-internal-power apollo-mission
+rocket-start-sequence apollo-mission
+rocket-start-engine apollo-mission
+rocket-lift-off apollo-mission
+rocket-status apollo-mission
+```
+
+### Example 3: Check Status and Debug
+
+```bash
+rocket-status lunar-mission
+rocket-debug lunar-mission  # If status is "failed"
+```
+
+### Example 4: Launch Multiple Missions
+
+Edit `mission-names.txt` to add mission names (one per line), then:
+```bash
+launch-rockets
+```
+
+## Mission Status
+
+Each mission creates a directory with the mission name containing:
+- `status` - Current mission status (created, start-power, internal-power, start-sequence, start-engine, launching, success, failed)
+- `reason` - Failure reason (if mission failed)
+
+## Troubleshooting
+
+- **Command not found**: Make sure you've run `source setup.sh` in your current shell session
+- **Permission denied**: The setup script should make files executable automatically. If not, run `chmod +x rocket-*`
+- **rocket.vt not found**: The rocket.vt file should be in the same directory as the rocket script. The script will automatically find it.
+
+## Files
+
+- `rocket` - Main rocket command script
+- `rocket-add`, `rocket-start-power`, etc. - Individual command wrappers
+- `create-and-launch-rocket` - Automated single mission launch script
+- `launch-rockets` - Automated multiple mission launch script
+- `setup.sh` - Setup script to add directory to PATH
+- `rocket.vt` - ASCII art animation file for lift-off
+- `mission-names.txt` - List of mission names for batch launches
+

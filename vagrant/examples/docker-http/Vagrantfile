@@ -1,0 +1,16 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.provider "docker" do |d|
+        # Use the official Nginx image from Docker Hub
+        d.image = "nginx:alpine"
+        d.name = "vagrant-nginx-container"
+        # Ensure the container remains running in the background
+        d.remains_running = true
+        # Port forwarding: Host 8080 -> Container 80
+        d.ports = ["8080:80"]
+        # Mount a local directory (e.g., ./html) to serve custom content
+        # d.volumes = ["./html:/usr/share/nginx/html:ro"]
+      end
+end

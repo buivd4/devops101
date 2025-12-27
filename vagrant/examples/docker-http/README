@@ -1,0 +1,54 @@
+# Docker HTTP Vagrant Example
+
+This example demonstrates using Vagrant with the Docker provider to run an nginx container.
+
+## Prerequisites
+
+- [Vagrant](https://www.vagrantup.com/downloads) installed
+- [Docker](https://www.docker.com/get-started) installed and running
+- Vagrant Docker plugin installed:
+  ```bash
+  vagrant plugin install vagrant-docker-compose
+  ```
+
+## Usage
+
+1. Navigate to this directory:
+   ```bash
+   cd vagrant/examples/docker-http
+   ```
+
+2. Start the container:
+   ```bash
+   vagrant up
+   ```
+
+3. Access nginx (running on container port 80, forwarded to host port 8080):
+   ```bash
+   curl http://localhost:8080
+   ```
+   Or open http://localhost:8080 in your browser
+
+4. Check container status:
+   ```bash
+   vagrant status
+   ```
+
+5. Stop the container:
+   ```bash
+   vagrant halt
+   ```
+
+6. Destroy the container:
+   ```bash
+   vagrant destroy
+   ```
+
+## What this example does
+
+- Uses the official `nginx:alpine` Docker image
+- Creates a container named `vagrant-nginx-container`
+- Forwards port 8080 on the host to port 80 in the container
+- Keeps the container running in the background
+- No virtual machine overhead - runs directly on Docker
+

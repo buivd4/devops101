@@ -1,0 +1,31 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/ubuntu1804"
+
+  # On macOS (especially ARM), use QEMU provider instead of VirtualBox
+  if Vagrant::Util::Platform.darwin?
+    puts "Using qemu provider for macOS"
+    config.vm.provider "qemu" do |qe|
+      qe.arch = "x86_64"
+      qe.machine = "q35"
+      qe.cpu = "max"
+      qe.net_device = "virtio-net-pci"
+    end
+    config.vm.provider "libvirt" do |lv|
+      lv.network :private_network, ip: "192.168.99.10"
+    end
+  else
+    config.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+    end
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt-get update
+    sudo apt-get install -y nginx
+    sudo systemctl start nginx
+    sudo systemctl enable nginx
+  SHELL
+end

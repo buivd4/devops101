@@ -1,0 +1,2 @@
+#!/bin/bash
+rocket lift-off $1
