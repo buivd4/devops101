@@ -38,3 +38,4 @@ if [ -f "$file_path" ]; then
     echo "Line count: $(wc -l < "$file_path")"
 fi
 
+

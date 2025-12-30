@@ -22,3 +22,4 @@ echo "Status of launch: ${mission_name}_status"
 echo "Current user: $USER"
 echo "Home directory: $HOME"
 
+

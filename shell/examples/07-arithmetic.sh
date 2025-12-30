@@ -34,3 +34,4 @@ echo "Using let: $result"
 echo "Floating point division:"
 echo "scale=2; $num1 / $num2" | bc
 
+

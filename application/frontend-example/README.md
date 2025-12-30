@@ -64,3 +64,4 @@ The application will be available at `http://localhost`
 - Modern build setup using Vite
 - Unit tests with Vitest and React Testing Library
 
+
