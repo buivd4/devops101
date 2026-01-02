@@ -1,0 +1,30 @@
+// Scripted Pipeline Example 7: Parallel Execution
+// Running stages in parallel using Groovy parallel maps
+
+node {
+    stage('Build') {
+        echo 'Building application...'
+    }
+    
+    stage('Test') {
+        parallel(
+            'Unit Tests': {
+                echo 'Running unit tests...'
+                sh 'sleep 5'
+            },
+            'Integration Tests': {
+                echo 'Running integration tests...'
+                sh 'sleep 5'
+            },
+            'Code Coverage': {
+                echo 'Running code coverage...'
+                sh 'sleep 5'
+            }
+        )
+    }
+    
+    stage('Deploy') {
+        echo 'Deploying application...'
+    }
+}
+

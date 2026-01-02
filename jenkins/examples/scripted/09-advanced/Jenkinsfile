@@ -1,0 +1,34 @@
+// Scripted Pipeline Example 9: Advanced Groovy Features
+// Demonstrating functions, closures, and complex logic in Scripted Pipelines
+
+def buildMessage(String stageName) {
+    return "Executing ${stageName} stage at ${new Date()}"
+}
+
+def deployToEnvironment(String env) {
+    echo "Deploying to ${env} environment"
+    // In real scenario, add deployment logic here
+}
+
+node {
+    env.APP_NAME = 'MyApplication'
+    env.BUILD_DATE = new Date().toString()
+    
+    stage('Build') {
+        echo buildMessage('Build')
+        sh 'echo "Building ${APP_NAME}"'
+    }
+    
+    stage('Test') {
+        echo buildMessage('Test')
+        def testResults = ['passed', 'passed', 'failed']
+        def passed = testResults.findAll { it == 'passed' }.size()
+        echo "Tests passed: ${passed}/${testResults.size()}"
+    }
+    
+    stage('Deploy') {
+        def targetEnv = env.BRANCH_NAME == 'main' ? 'production' : 'staging'
+        deployToEnvironment(targetEnv)
+    }
+}
+

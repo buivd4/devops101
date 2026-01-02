@@ -1,0 +1,24 @@
+// Lab 1: Create Your First Jenkins Pipeline
+//
+// Instructions:
+// Create a basic pipeline that:
+//   1. Runs on any available agent
+//   2. Has a single stage called "Hello" that prints "Hello, Jenkins!"
+//
+// Example Output:
+// [Pipeline] stage
+// [Pipeline] { (Hello)
+// [Pipeline] echo
+// Hello, Jenkins!
+// [Pipeline] }
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    // TODO: Add agent directive
+    
+    stages {
+        // TODO: Add a stage called "Hello" with a step that prints "Hello, Jenkins!"
+    }
+}
+

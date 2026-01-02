@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building application...'
+                sh 'echo "Build completed successfully"'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                sh 'echo "Tests passed"'
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'This will always run regardless of build status'
+            cleanWs()
+        }
+        
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        
+        failure {
+            echo 'Pipeline failed!'
+        }
+        
+        unstable {
+            echo 'Pipeline is unstable'
+        }
+    }
+}
+

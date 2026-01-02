@@ -1,0 +1,22 @@
+// Lab 2: Multiple Stages Pipeline
+//
+// Instructions:
+// Create a pipeline with three stages:
+//   1. "Build" stage - print "Building application..."
+//   2. "Test" stage - print "Running tests..."
+//   3. "Deploy" stage - print "Deploying application..."
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    agent any
+    
+    stages {
+        // TODO: Add Build stage
+        
+        // TODO: Add Test stage
+        
+        // TODO: Add Deploy stage
+    }
+}
+

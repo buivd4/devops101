@@ -1,0 +1,7 @@
+# Linux System Manager Requirements
+# 
+# Standard library only - no external dependencies required
+# 
+# Optional dependencies for enhanced functionality:
+# psutil>=5.8.0  # Enhanced system monitoring (CPU, memory, disk)
+

@@ -1,0 +1,10 @@
+// Scripted Pipeline Example 1: Basic Scripted Pipeline
+// Scripted Pipelines use Groovy syntax and offer more flexibility than Declarative Pipelines
+
+node {
+    stage('Hello World') {
+        echo 'Hello, World!'
+        echo 'This is a basic Scripted Pipeline'
+    }
+}
+

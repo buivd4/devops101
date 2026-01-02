@@ -1,0 +1,10 @@
+configuration-as-code
+workflow-aggregator
+git
+docker-workflow
+docker-plugin
+ssh-slaves
+pipeline-stage-view
+blueocean
+job-dsl
+

@@ -1,0 +1,24 @@
+// Lab 7: Pipeline Parameters
+//
+// Instructions:
+// Create a pipeline that:
+//   1. Defines a string parameter 'APP_VERSION' with default value '1.0.0'
+//   2. Defines a choice parameter 'ENVIRONMENT' with choices: ['dev', 'staging', 'production']
+//   3. Has a stage that prints both parameter values
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    agent any
+    
+    // TODO: Add parameters block
+    
+    stages {
+        stage('Display') {
+            steps {
+                // TODO: Print APP_VERSION and ENVIRONMENT parameters
+            }
+        }
+    }
+}
+

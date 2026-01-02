@@ -1,0 +1,46 @@
+// Scripted Pipeline Example 10: Complete CI/CD Pipeline
+// A complete Node.js application pipeline using Scripted Pipeline syntax
+
+properties([
+    parameters([
+        string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'Application version'),
+        choice(name: 'ENV', choices: ['dev', 'staging', 'production'], description: 'Environment')
+    ])
+])
+
+node {
+    env.NODE_ENV = params.ENV
+    env.APP_VERSION = params.APP_VERSION
+    
+    stage('Checkout') {
+        echo 'Checking out source code...'
+        // In real scenario: checkout scm
+    }
+    
+    stage('Build') {
+        docker.image('node:18-alpine').inside {
+            sh 'npm install'
+            sh 'npm run build'
+        }
+    }
+    
+    stage('Test') {
+        docker.image('node:18-alpine').inside {
+            sh 'npm test'
+        }
+    }
+    
+    stage('Deploy') {
+        if (params.ENV == 'production' && env.BRANCH_NAME != 'main') {
+            error('Production deployment only allowed from main branch')
+        }
+        
+        echo "Deploying version ${params.APP_VERSION} to ${params.ENV}"
+        // In real scenario, add deployment logic here
+    }
+    
+    stage('Notify') {
+        echo "Pipeline completed for ${params.APP_VERSION} on ${params.ENV}"
+    }
+}
+

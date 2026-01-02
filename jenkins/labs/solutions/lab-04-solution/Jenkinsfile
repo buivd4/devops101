@@ -1,0 +1,19 @@
+// Lab 4 Solution: Environment Variables
+pipeline {
+    agent any
+    
+    environment {
+        APP_NAME = 'MyApp'
+        VERSION = '1.0.0'
+    }
+    
+    stages {
+        stage('Display') {
+            steps {
+                echo "App Name: ${APP_NAME}"
+                echo "Version: ${VERSION}"
+            }
+        }
+    }
+}
+

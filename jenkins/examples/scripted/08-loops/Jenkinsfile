@@ -1,0 +1,26 @@
+// Scripted Pipeline Example 8: Loops and Iteration
+// Using Groovy loops for processing multiple items
+
+node {
+    stage('Process') {
+        def environments = ['dev', 'staging', 'production']
+        
+        environments.each { env ->
+            echo "Processing environment: ${env}"
+        }
+    }
+    
+    stage('Build Matrix') {
+        def versions = ['1.0.0', '1.1.0', '2.0.0']
+        def builds = [:]
+        
+        versions.each { version ->
+            builds["Build-${version}"] = {
+                echo "Building version ${version}"
+            }
+        }
+        
+        parallel builds
+    }
+}
+

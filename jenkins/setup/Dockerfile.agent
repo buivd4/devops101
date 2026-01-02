@@ -1,0 +1,113 @@
+FROM openjdk:26-ea-11-jdk-slim
+
+# Create jenkins user
+RUN groupadd -g 1000 jenkins && \
+    useradd -d /home/jenkins -s /bin/bash -u 1000 -g 1000 jenkins && \
+    mkdir -p /home/jenkins/agent && \
+    chown jenkins:jenkins /home/jenkins/agent
+
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y \
+    openssh-server \
+    git \
+    curl \
+    wget \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    sudo && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI from official Docker repository
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create docker group (if it doesn't exist) without a fixed GID
+# The startup script will adjust the GID to match the host at runtime
+# docker-ce-cli doesn't create the docker group, so we create it explicitly
+RUN if ! getent group docker > /dev/null 2>&1; then \
+      # Try to create with GID 999, but if that's taken, let system assign one
+      groupadd -g 999 docker 2>/dev/null || groupadd docker; \
+    fi
+
+# Configure SSH
+RUN mkdir -p /var/run/sshd && \
+    echo "jenkins:jenkins" | chpasswd && \
+    echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+
+# Add jenkins user to docker group and verify docker installation
+RUN usermod -aG docker jenkins && \
+    echo "Docker installation verification:" && \
+    docker --version && \
+    which docker && \
+    ls -la /usr/bin/docker && \
+    echo "Docker group info:" && \
+    getent group docker
+
+# Find Java location and create symlink to /usr/bin/java for Jenkins SSH launcher
+# OpenJDK images typically have Java at /usr/local/openjdk-*/bin/java
+# This ensures Java is available for non-interactive SSH sessions (which don't source .bashrc)
+RUN JAVA_BIN=$(find /usr/local -name java -type f -executable 2>/dev/null | head -1) || \
+    JAVA_BIN=$(which java 2>/dev/null) || \
+    JAVA_BIN=$(find /usr -name java -type f -executable 2>/dev/null | head -1) && \
+    if [ -n "$JAVA_BIN" ] && [ -f "$JAVA_BIN" ]; then \
+      ln -sf "$JAVA_BIN" /usr/bin/java && \
+      chmod +x /usr/bin/java && \
+      echo "Java symlink created: $JAVA_BIN -> /usr/bin/java" && \
+      /usr/bin/java -version; \
+    else \
+      echo "ERROR: Java not found!" && exit 1; \
+    fi
+
+# Generate SSH host keys during build
+RUN ssh-keygen -A
+
+# Create startup script to start SSH server (must run as root)
+# This script also fixes Docker socket permissions by matching the host docker group GID
+RUN echo '#!/bin/bash\n\
+set -e\n\
+# Fix Docker socket permissions by matching the host docker group GID\n\
+if [ -S /var/run/docker.sock ]; then\n\
+  DOCKER_GID=$(stat -c %g /var/run/docker.sock 2>/dev/null || echo "999")\n\
+  if [ "$DOCKER_GID" != "0" ]; then\n\
+    EXISTING_GID=$(getent group docker | cut -d: -f3 2>/dev/null || echo "")\n\
+    if [ -n "$EXISTING_GID" ] && [ "$EXISTING_GID" != "$DOCKER_GID" ]; then\n\
+      # Remove existing docker group if GID differs\n\
+      groupdel docker 2>/dev/null || true\n\
+    fi\n\
+    # Create docker group with matching GID if it doesn'\''t exist\n\
+    if ! getent group docker > /dev/null 2>&1; then\n\
+      groupadd -g "$DOCKER_GID" docker 2>/dev/null || true\n\
+    fi\n\
+    # Add jenkins user to docker group\n\
+    usermod -aG docker jenkins 2>/dev/null || true\n\
+    echo "Docker group GID adjusted to match host: $DOCKER_GID"\n\
+  fi\n\
+fi\n\
+# Start SSH server\n\
+exec /usr/sbin/sshd -D' > /usr/local/bin/start-ssh.sh && \
+    chmod +x /usr/local/bin/start-ssh.sh
+
+WORKDIR /home/jenkins/agent
+
+EXPOSE 22
+
+# Keep as root to run SSH server
+CMD ["/usr/local/bin/start-ssh.sh"]
+

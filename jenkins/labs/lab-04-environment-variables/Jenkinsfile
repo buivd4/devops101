@@ -1,0 +1,24 @@
+// Lab 4: Environment Variables
+//
+// Instructions:
+// Create a pipeline that:
+//   1. Defines an environment variable APP_NAME = "MyApp"
+//   2. Defines an environment variable VERSION = "1.0.0"
+//   3. Has a stage that prints both variables
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    agent any
+    
+    // TODO: Add environment block with APP_NAME and VERSION
+    
+    stages {
+        stage('Display') {
+            steps {
+                // TODO: Print APP_NAME and VERSION
+            }
+        }
+    }
+}
+

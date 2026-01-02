@@ -1,0 +1,50 @@
+// Lab 8 Solution: Complete CI/CD Pipeline
+pipeline {
+    agent {
+        docker {
+            image 'node:18-alpine'
+        }
+    }
+    
+    environment {
+        NODE_ENV = 'production'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                // In real scenario: checkout scm
+            }
+        }
+        
+        stage('Install') {
+            steps {
+                echo 'npm install'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'npm test'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'npm run build'
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline execution completed'
+        }
+        
+        success {
+            echo 'Build succeeded!'
+        }
+    }
+}
+

@@ -1,0 +1,12 @@
+# Development dependencies
+setuptools>=45
+wheel>=0.36.0
+build>=0.7.0
+
+# Optional: for enhanced system monitoring
+psutil>=5.8.0
+
+# Testing (optional)
+pytest>=7.0.0
+pytest-cov>=3.0.0
+

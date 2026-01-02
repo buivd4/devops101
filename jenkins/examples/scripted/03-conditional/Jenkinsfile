@@ -1,0 +1,19 @@
+// Scripted Pipeline Example 3: Conditional Logic
+// Scripted pipelines allow full Groovy control flow (if/else, loops, etc.)
+
+node {
+    stage('Build') {
+        echo 'Building application...'
+    }
+    
+    stage('Deploy') {
+        if (env.BRANCH_NAME == 'main') {
+            echo 'Deploying to production...'
+        } else if (env.BRANCH_NAME == 'develop') {
+            echo 'Deploying to staging...'
+        } else {
+            echo 'Skipping deployment for feature branch'
+        }
+    }
+}
+

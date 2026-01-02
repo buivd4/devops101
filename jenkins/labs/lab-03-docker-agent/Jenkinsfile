@@ -1,0 +1,22 @@
+// Lab 3: Docker Agent Pipeline
+//
+// Instructions:
+// Create a pipeline that:
+//   1. Uses a Docker agent with image 'node:18-alpine'
+//   2. Has a "Check" stage that runs 'node --version' and 'npm --version'
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    // TODO: Add docker agent with image 'node:18-alpine'
+    
+    stages {
+        stage('Check') {
+            steps {
+                // TODO: Add step to check Node.js version
+                // TODO: Add step to check npm version
+            }
+        }
+    }
+}
+

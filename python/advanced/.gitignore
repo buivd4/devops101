@@ -1,0 +1,18 @@
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated files
+*.log
+reports/*
+backups/*
+logs/*
+!reports/.gitkeep
+!backups/.gitkeep
+!logs/.gitkeep
+

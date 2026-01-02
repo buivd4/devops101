@@ -1,0 +1,160 @@
+// Advanced Jenkinsfile with Docker image building, code quality checks, and deployment
+pipeline {
+    agent any
+    
+    environment {
+        JAVA_HOME = '/usr/local/openjdk-17'
+        MAVEN_OPTS = '-Dmaven.repo.local=.m2/repository -Xmx1024m'
+        APP_NAME = 'java-example'
+        JAR_FILE = 'target/java-example-1.0.0.jar'
+        DOCKER_IMAGE = "${APP_NAME}:${BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'your-registry.com' // Update with your Docker registry
+    }
+    
+    parameters {
+        choice(
+            name: 'DEPLOY_ENV',
+            choices: ['none', 'dev', 'staging', 'production'],
+            description: 'Target deployment environment'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip running tests'
+        )
+        booleanParam(
+            name: 'BUILD_DOCKER',
+            defaultValue: true,
+            description: 'Build Docker image'
+        )
+        string(
+            name: 'MAVEN_GOALS',
+            defaultValue: 'clean package',
+            description: 'Maven goals to execute'
+        )
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                    env.GIT_BRANCH_NAME = env.BRANCH_NAME ?: 'main'
+                }
+            }
+        }
+        
+        stage('Build') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh "mvn clean compile"
+            }
+        }
+        
+        stage('Test') {
+            when {
+                not { params.SKIP_TESTS }
+            }
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/**/*.xml'
+                    publishTestResults testResultsPattern: 'target/surefire-reports/**/*.xml'
+                    
+                    // Publish test coverage if available
+                    script {
+                        if (fileExists('target/site/jacoco/index.html')) {
+                            publishHTML([
+                                reportDir: 'target/site/jacoco',
+                                reportFiles: 'index.html',
+                                reportName: 'Test Coverage Report'
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Package') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh "mvn ${params.MAVEN_GOALS} -DskipTests"
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+        
+        stage('Build Docker Image') {
+            when {
+                expression { params.BUILD_DOCKER && fileExists('Dockerfile') }
+            }
+            steps {
+                script {
+                    def customImage = docker.build("${DOCKER_IMAGE}")
+                    echo "Docker image built: ${DOCKER_IMAGE}"
+                    // Uncomment to push to registry:
+                    // docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                    //     customImage.push()
+                    //     customImage.push("latest")
+                    // }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                expression { params.DEPLOY_ENV != 'none' }
+            }
+            steps {
+                script {
+                    echo "Deploying ${APP_NAME} to ${params.DEPLOY_ENV}"
+                    if (params.DEPLOY_ENV == 'production') {
+                        input message: "Deploy to production?", ok: 'Deploy'
+                    }
+                    // Add your deployment logic here
+                    // Example: kubectl apply, helm upgrade, etc.
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "✅ Build #${BUILD_NUMBER} completed successfully!"
+            echo "JAR file: ${JAR_FILE}"
+            echo "Git commit: ${env.GIT_COMMIT_SHORT}"
+        }
+        failure {
+            echo "❌ Build #${BUILD_NUMBER} failed!"
+            echo "Check test results and build logs for details."
+        }
+        unstable {
+            echo "⚠️ Build #${BUILD_NUMBER} is unstable (tests failed)"
+        }
+    }
+}
+

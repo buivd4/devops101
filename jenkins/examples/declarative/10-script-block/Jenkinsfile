@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    def buildNumber = env.BUILD_NUMBER
+                    def jobName = env.JOB_NAME
+                    
+                    echo "Build Number: ${buildNumber}"
+                    echo "Job Name: ${jobName}"
+                    
+                    if (buildNumber.toInteger() > 10) {
+                        echo 'This is a mature build'
+                    } else {
+                        echo 'This is an early build'
+                    }
+                }
+            }
+        }
+        
+        stage('Process') {
+            steps {
+                script {
+                    def items = ['item1', 'item2', 'item3']
+                    items.each { item ->
+                        echo "Processing ${item}"
+                    }
+                }
+            }
+        }
+    }
+}
+

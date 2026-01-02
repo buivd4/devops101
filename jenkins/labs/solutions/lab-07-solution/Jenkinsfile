@@ -1,0 +1,19 @@
+// Lab 7 Solution: Pipeline Parameters
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'Application version')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'production'], description: 'Target environment')
+    }
+    
+    stages {
+        stage('Display') {
+            steps {
+                echo "App Version: ${params.APP_VERSION}"
+                echo "Environment: ${params.ENVIRONMENT}"
+            }
+        }
+    }
+}
+

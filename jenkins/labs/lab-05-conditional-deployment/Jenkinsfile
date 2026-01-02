@@ -1,0 +1,24 @@
+// Lab 5: Conditional Deployment
+//
+// Instructions:
+// Create a pipeline that:
+//   1. Has a "Build" stage that always runs
+//   2. Has a "Deploy to Production" stage that only runs when branch is "main"
+//   3. Use the 'when' directive with 'branch' condition
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    agent any
+    
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building application...'
+            }
+        }
+        
+        // TODO: Add "Deploy to Production" stage that only runs on main branch
+    }
+}
+

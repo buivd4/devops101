@@ -1,0 +1,757 @@
+jobs:
+  # Declarative Pipeline Examples
+  - script: |
+          pipelineJob('declarative-01-basic-pipeline') {
+            description('Basic declarative pipeline example - Hello World')
+            definition {
+              cps {
+                script('''
+                  pipeline {
+                      agent any
+                      
+                      stages {
+                          stage('Hello World') {
+                              steps {
+                                  echo 'Hello, World!'
+                                  echo 'This is a basic Jenkins pipeline'
+                              }
+                          }
+                      }
+                  }
+                ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-02-stages') {
+            description('Declarative pipeline with multiple stages (Build, Test, Deploy)')
+            definition {
+              cps {
+                script('''
+                  pipeline {
+                      agent any
+                      
+                      stages {
+                          stage('Build') {
+                              steps {
+                                  echo 'Building the application...'
+                                  sh 'echo "Build stage completed"'
+                              }
+                          }
+                          
+                          stage('Test') {
+                              steps {
+                                  echo 'Running tests...'
+                                  sh 'echo "Test stage completed"'
+                              }
+                          }
+                          
+                          stage('Deploy') {
+                              steps {
+                                  echo 'Deploying the application...'
+                                  sh 'echo "Deploy stage completed"'
+                              }
+                          }
+                      }
+                  }
+                ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-03-docker-agent') {
+            description('Declarative pipeline using Docker agent (node:18-alpine)')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent {
+                      docker {
+                          image 'node:18-alpine'
+                      }
+                  }
+                  
+                  stages {
+                      stage('Build') {
+                          steps {
+                              sh 'node --version'
+                              sh 'npm --version'
+                              echo 'Build stage running in Docker container'
+                          }
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-04-environment-variables') {
+            description('Declarative pipeline with environment variables')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent any
+                  
+                  environment {
+                      NODE_ENV = 'production'
+                      APP_VERSION = '1.0.0'
+                      BUILD_NUMBER = "${env.BUILD_NUMBER}"
+                  }
+                  
+                  stages {
+                      stage('Environment') {
+                          steps {
+                              echo "Node Environment: ${NODE_ENV}"
+                              echo "App Version: ${APP_VERSION}"
+                              echo "Build Number: ${BUILD_NUMBER}"
+                              echo "Job Name: ${env.JOB_NAME}"
+                              echo "Build URL: ${env.BUILD_URL}"
+                          }
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-05-conditional-stages') {
+            description('Declarative pipeline with conditional stages based on branch')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent any
+                  
+                  stages {
+                      stage('Build') {
+                          steps {
+                              echo 'Building application...'
+                          }
+                      }
+                      
+                      stage('Test') {
+                          steps {
+                              echo 'Running tests...'
+                          }
+                      }
+                      
+                      stage('Deploy to Staging') {
+                          when {
+                              branch 'develop'
+                          }
+                          steps {
+                              echo 'Deploying to staging environment...'
+                          }
+                      }
+                      
+                      stage('Deploy to Production') {
+                          when {
+                              branch 'main'
+                          }
+                          steps {
+                              echo 'Deploying to production environment...'
+                          }
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-06-post-actions') {
+            description('Declarative pipeline with post-build actions (always, success, failure, unstable)')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent any
+                  
+                  stages {
+                      stage('Build') {
+                          steps {
+                              echo 'Building application...'
+                              sh 'echo "Build completed successfully"'
+                          }
+                      }
+                      
+                      stage('Test') {
+                          steps {
+                              echo 'Running tests...'
+                              sh 'echo "Tests passed"'
+                          }
+                      }
+                  }
+                  
+                  post {
+                      always {
+                          echo 'This will always run regardless of build status'
+                          cleanWs()
+                      }
+                      
+                      success {
+                          echo 'Pipeline succeeded!'
+                      }
+                      
+                      failure {
+                          echo 'Pipeline failed!'
+                      }
+                      
+                      unstable {
+                          echo 'Pipeline is unstable'
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-07-parameters') {
+            description('Declarative pipeline with parameters (string, choice, boolean)')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent any
+                  
+                  parameters {
+                      string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'Application version to build')
+                      choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'production'], description: 'Target environment')
+                      booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run tests during build')
+                  }
+                  
+                  stages {
+                      stage('Build') {
+                          steps {
+                              echo "Building version ${params.APP_VERSION}"
+                              echo "Target environment: ${params.ENVIRONMENT}"
+                          }
+                      }
+                      
+                      stage('Test') {
+                          when {
+                              expression { params.RUN_TESTS == true }
+                          }
+                          steps {
+                              echo 'Running tests...'
+                          }
+                      }
+                      
+                      stage('Deploy') {
+                          steps {
+                              echo "Deploying to ${params.ENVIRONMENT} environment"
+                          }
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-08-nodejs-pipeline') {
+            description('Complete Node.js pipeline with Docker agent (install, test, build)')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent {
+                      docker {
+                          image 'node:18-alpine'
+                      }
+                  }
+                  
+                  stages {
+                      stage('Checkout') {
+                          steps {
+                              echo 'Checking out source code...'
+                              // In real scenario: checkout scm
+                          }
+                      }
+                      
+                      stage('Install Dependencies') {
+                          steps {
+                              sh 'npm install'
+                          }
+                      }
+                      
+                      stage('Test') {
+                          steps {
+                              sh 'npm test'
+                          }
+                      }
+                      
+                      stage('Build') {
+                          steps {
+                              sh 'npm run build'
+                          }
+                      }
+                  }
+                  
+                  post {
+                      always {
+                          echo 'Pipeline execution completed'
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-09-parallel-stages') {
+            description('Declarative pipeline with parallel execution of test stages')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent any
+                  
+                  stages {
+                      stage('Build') {
+                          steps {
+                              echo 'Building application...'
+                          }
+                      }
+                      
+                      stage('Test') {
+                          parallel {
+                              stage('Unit Tests') {
+                                  steps {
+                                      echo 'Running unit tests...'
+                                      sh 'sleep 5'
+                                  }
+                              }
+                              
+                              stage('Integration Tests') {
+                                  steps {
+                                      echo 'Running integration tests...'
+                                      sh 'sleep 5'
+                                  }
+                              }
+                              
+                              stage('Code Coverage') {
+                                  steps {
+                                      echo 'Running code coverage...'
+                                      sh 'sleep 5'
+                                  }
+                              }
+                          }
+                      }
+                      
+                      stage('Deploy') {
+                          steps {
+                              echo 'Deploying application...'
+                          }
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('declarative-10-script-block') {
+            description('Declarative pipeline with script blocks for Groovy code')
+            definition {
+              cps {
+                script('''
+              pipeline {
+                  agent any
+                  
+                  stages {
+                      stage('Build') {
+                          steps {
+                              script {
+                                  def buildNumber = env.BUILD_NUMBER
+                                  def jobName = env.JOB_NAME
+                                  
+                                  echo "Build Number: ${buildNumber}"
+                                  echo "Job Name: ${jobName}"
+                                  
+                                  if (buildNumber.toInteger() > 10) {
+                                      echo 'This is a mature build'
+                                  } else {
+                                      echo 'This is an early build'
+                                  }
+                              }
+                          }
+                      }
+                      
+                      stage('Process') {
+                          steps {
+                              script {
+                                  def items = ['item1', 'item2', 'item3']
+                                  items.each { item ->
+                                      echo "Processing ${item}"
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  # Scripted Pipeline Examples
+  - script: |
+          pipelineJob('scripted-01-basic') {
+            description('Basic scripted pipeline example - Hello World')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 1: Basic Scripted Pipeline
+              // Scripted Pipelines use Groovy syntax and offer more flexibility than Declarative Pipelines
+              
+              node {
+                  stage('Hello World') {
+                      echo 'Hello, World!'
+                      echo 'This is a basic Scripted Pipeline'
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-02-stages') {
+            description('Scripted pipeline with multiple stages (Build, Test, Deploy)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 2: Multiple Stages
+              // Scripted pipelines use Groovy control structures for stages
+              
+              node {
+                  stage('Build') {
+                      echo 'Building the application...'
+                      sh 'echo "Build stage completed"'
+                  }
+                  
+                  stage('Test') {
+                      echo 'Running tests...'
+                      sh 'echo "Test stage completed"'
+                  }
+                  
+                  stage('Deploy') {
+                      echo 'Deploying the application...'
+                      sh 'echo "Deploy stage completed"'
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-03-conditional') {
+            description('Scripted pipeline with conditional logic (if/else)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 3: Conditional Logic
+              // Scripted pipelines allow full Groovy control flow (if/else, loops, etc.)
+              
+              node {
+                  stage('Build') {
+                      echo 'Building application...'
+                  }
+                  
+                  stage('Deploy') {
+                      if (env.BRANCH_NAME == 'main') {
+                          echo 'Deploying to production...'
+                      } else if (env.BRANCH_NAME == 'develop') {
+                          echo 'Deploying to staging...'
+                      } else {
+                          echo 'Skipping deployment for feature branch'
+                      }
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-04-docker') {
+            description('Scripted pipeline using Docker agent (node:18-alpine)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 4: Docker Agent
+              // Using Docker containers in Scripted Pipelines
+              
+              docker.image('node:18-alpine').inside {
+                  stage('Check') {
+                      sh 'node --version'
+                      sh 'npm --version'
+                      echo 'Running in Docker container'
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-05-parameters') {
+            description('Scripted pipeline with parameters (string, choice)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 5: Parameters
+              // Handling parameters in Scripted Pipelines
+              
+              properties([
+                  parameters([
+                      string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'Application version'),
+                      choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'production'], description: 'Target environment')
+                  ])
+              ])
+              
+              node {
+                  stage('Build') {
+                      echo "Building version ${params.APP_VERSION}"
+                      echo "Target environment: ${params.ENVIRONMENT}"
+                  }
+                  
+                  stage('Deploy') {
+                      echo "Deploying to ${params.ENVIRONMENT}"
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-06-error-handling') {
+            description('Scripted pipeline with error handling (try-catch blocks)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 6: Error Handling
+              // Using try-catch blocks for error handling in Scripted Pipelines
+              
+              node {
+                  stage('Build') {
+                      try {
+                          echo 'Building application...'
+                          sh 'echo "Build successful"'
+                      } catch (Exception e) {
+                          echo "Build failed: ${e.message}"
+                          currentBuild.result = 'FAILURE'
+                          throw e
+                      }
+                  }
+                  
+                  stage('Test') {
+                      try {
+                          echo 'Running tests...'
+                          sh 'echo "Tests passed"'
+                      } catch (Exception e) {
+                          echo "Tests failed: ${e.message}"
+                          currentBuild.result = 'UNSTABLE'
+                      }
+                  }
+                  
+                  stage('Notify') {
+                      echo "Build status: ${currentBuild.result}"
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-07-parallel') {
+            description('Scripted pipeline with parallel execution of test stages')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 7: Parallel Execution
+              // Running stages in parallel using Groovy parallel maps
+              
+              node {
+                  stage('Build') {
+                      echo 'Building application...'
+                  }
+                  
+                  stage('Test') {
+                      parallel(
+                          'Unit Tests': {
+                              echo 'Running unit tests...'
+                              sh 'sleep 5'
+                          },
+                          'Integration Tests': {
+                              echo 'Running integration tests...'
+                              sh 'sleep 5'
+                          },
+                          'Code Coverage': {
+                              echo 'Running code coverage...'
+                              sh 'sleep 5'
+                          }
+                      )
+                  }
+                  
+                  stage('Deploy') {
+                      echo 'Deploying application...'
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-08-loops') {
+            description('Scripted pipeline with loops and iteration (each, parallel builds)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 8: Loops and Iteration
+              // Using Groovy loops for processing multiple items
+              
+              node {
+                  stage('Process') {
+                      def environments = ['dev', 'staging', 'production']
+                      
+                      environments.each { env ->
+                          echo "Processing environment: ${env}"
+                      }
+                  }
+                  
+                  stage('Build Matrix') {
+                      def versions = ['1.0.0', '1.1.0', '2.0.0']
+                      def builds = [:]
+                      
+                      versions.each { version ->
+                          builds["Build-${version}"] = {
+                              echo "Building version ${version}"
+                          }
+                      }
+                      
+                      parallel builds
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-09-advanced') {
+            description('Scripted pipeline with advanced Groovy features (functions, closures)')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 9: Advanced Groovy Features
+              // Demonstrating functions, closures, and complex logic in Scripted Pipelines
+              
+              def buildMessage(String stageName) {
+                  return "Executing ${stageName} stage at ${new Date()}"
+              }
+              
+              def deployToEnvironment(String env) {
+                  echo "Deploying to ${env} environment"
+                  // In real scenario, add deployment logic here
+              }
+              
+              node {
+                  env.APP_NAME = 'MyApplication'
+                  env.BUILD_DATE = new Date().toString()
+                  
+                  stage('Build') {
+                      echo buildMessage('Build')
+                      sh 'echo "Building ${APP_NAME}"'
+                  }
+                  
+                  stage('Test') {
+                      echo buildMessage('Test')
+                      def testResults = ['passed', 'passed', 'failed']
+                      def passed = testResults.findAll { it == 'passed' }.size()
+                      echo "Tests passed: ${passed}/${testResults.size()}"
+                  }
+                  
+                  stage('Deploy') {
+                      def targetEnv = env.BRANCH_NAME == 'main' ? 'production' : 'staging'
+                      deployToEnvironment(targetEnv)
+                  }
+              }
+            ''')
+              }
+            }
+          }
+
+  - script: |
+          pipelineJob('scripted-10-complete') {
+            description('Complete CI/CD pipeline example with Node.js, Docker, parameters, and conditional deployment')
+            definition {
+              cps {
+                script('''
+              // Scripted Pipeline Example 10: Complete CI/CD Pipeline
+              // A complete Node.js application pipeline using Scripted Pipeline syntax
+              
+              properties([
+                  parameters([
+                      string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'Application version'),
+                      choice(name: 'ENV', choices: ['dev', 'staging', 'production'], description: 'Environment')
+                  ])
+              ])
+              
+              node {
+                  env.NODE_ENV = params.ENV
+                  env.APP_VERSION = params.APP_VERSION
+                  
+                  stage('Checkout') {
+                      echo 'Checking out source code...'
+                      // In real scenario: checkout scm
+                  }
+                  
+                  stage('Build') {
+                      docker.image('node:18-alpine').inside {
+                          sh 'npm install'
+                          sh 'npm run build'
+                      }
+                  }
+                  
+                  stage('Test') {
+                      docker.image('node:18-alpine').inside {
+                          sh 'npm test'
+                      }
+                  }
+                  
+                  stage('Deploy') {
+                      if (params.ENV == 'production' && env.BRANCH_NAME != 'main') {
+                          error('Production deployment only allowed from main branch')
+                      }
+                      
+                      echo "Deploying version ${params.APP_VERSION} to ${params.ENV}"
+                      // In real scenario, add deployment logic here
+                  }
+                  
+                  stage('Notify') {
+                      echo "Pipeline completed for ${params.APP_VERSION} on ${params.ENV}"
+                  }
+              }
+            ''')
+              }
+            }
+          }

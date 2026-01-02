@@ -1,0 +1,26 @@
+// Lab 6: Post Actions
+//
+// Instructions:
+// Create a pipeline that:
+//   1. Has a "Build" stage
+//   2. Has post actions:
+//      - 'always' block that prints "Pipeline execution completed"
+//      - 'success' block that prints "Build succeeded!"
+//      - 'failure' block that prints "Build failed!"
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    agent any
+    
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building application...'
+            }
+        }
+    }
+    
+    // TODO: Add post block with always, success, and failure conditions
+}
+

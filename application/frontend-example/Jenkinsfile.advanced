@@ -1,0 +1,136 @@
+// Advanced Jenkinsfile with Docker image building and deployment stages
+pipeline {
+    agent any
+    
+    environment {
+        NODE_ENV = 'production'
+        APP_NAME = 'frontend-example'
+        DOCKER_IMAGE = "${APP_NAME}:${BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'your-registry.com' // Update with your Docker registry
+    }
+    
+    parameters {
+        choice(
+            name: 'DEPLOY_ENV',
+            choices: ['dev', 'staging', 'production'],
+            description: 'Target deployment environment'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip running tests'
+        )
+        booleanParam(
+            name: 'BUILD_DOCKER',
+            defaultValue: true,
+            description: 'Build Docker image'
+        )
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                }
+            }
+            steps {
+                sh 'npm ci'
+            }
+        }
+        
+        stage('Run Tests') {
+            when {
+                not { params.SKIP_TESTS }
+            }
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                }
+            }
+            steps {
+                sh 'npm test -- --run'
+            }
+            post {
+                always {
+                    script {
+                        if (fileExists('test-results.xml')) {
+                            junit 'test-results.xml'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build Application') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                }
+            }
+            steps {
+                sh 'npm run build'
+                archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
+            }
+        }
+        
+        stage('Build Docker Image') {
+            when {
+                expression { params.BUILD_DOCKER }
+            }
+            steps {
+                script {
+                    def customImage = docker.build("${DOCKER_IMAGE}")
+                    echo "Docker image built: ${DOCKER_IMAGE}"
+                    // Uncomment to push to registry:
+                    // docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                    //     customImage.push()
+                    //     customImage.push("latest")
+                    // }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                expression { params.DEPLOY_ENV != 'none' }
+            }
+            steps {
+                script {
+                    echo "Deploying to ${params.DEPLOY_ENV} environment"
+                    // Add your deployment logic here
+                    // Example: kubectl, docker-compose, etc.
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "✅ Build #${BUILD_NUMBER} completed successfully!"
+            echo "Git commit: ${env.GIT_COMMIT_SHORT}"
+        }
+        failure {
+            echo "❌ Build #${BUILD_NUMBER} failed!"
+        }
+        unstable {
+            echo "⚠️ Build #${BUILD_NUMBER} is unstable"
+        }
+    }
+}
+

@@ -1,0 +1,21 @@
+// Scripted Pipeline Example 5: Parameters
+// Handling parameters in Scripted Pipelines
+
+properties([
+    parameters([
+        string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'Application version'),
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'production'], description: 'Target environment')
+    ])
+])
+
+node {
+    stage('Build') {
+        echo "Building version ${params.APP_VERSION}"
+        echo "Target environment: ${params.ENVIRONMENT}"
+    }
+    
+    stage('Deploy') {
+        echo "Deploying to ${params.ENVIRONMENT}"
+    }
+}
+

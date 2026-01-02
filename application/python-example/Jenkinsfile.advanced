@@ -1,0 +1,182 @@
+// Advanced Jenkinsfile with code quality checks, test coverage, and Docker building
+pipeline {
+    agent any
+    
+    environment {
+        PYTHONUNBUFFERED = '1'
+        APP_NAME = 'python-example'
+        DOCKER_IMAGE = "${APP_NAME}:${BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'your-registry.com' // Update with your Docker registry
+    }
+    
+    parameters {
+        choice(
+            name: 'DEPLOY_ENV',
+            choices: ['none', 'dev', 'staging', 'production'],
+            description: 'Target deployment environment'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip running tests'
+        )
+        booleanParam(
+            name: 'BUILD_DOCKER',
+            defaultValue: true,
+            description: 'Build Docker image'
+        )
+        booleanParam(
+            name: 'RUN_LINT',
+            defaultValue: true,
+            description: 'Run code linting'
+        )
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                }
+            }
+            steps {
+                sh '''
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Lint') {
+            when {
+                expression { params.RUN_LINT }
+            }
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                }
+            }
+            steps {
+                script {
+                    sh 'pip install flake8 pylint || true'
+                    sh 'flake8 app.py test_app.py --max-line-length=120 --exclude=venv || true'
+                }
+            }
+        }
+        
+        stage('Test') {
+            when {
+                not { params.SKIP_TESTS }
+            }
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                }
+            }
+            steps {
+                sh '''
+                    pip install pytest pytest-cov
+                    pytest test_app.py -v --tb=short --cov=app --cov-report=xml --cov-report=html --junitxml=test-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'test-results.xml'
+                    publishTestResults testResultsPattern: 'test-results.xml'
+                    
+                    // Publish coverage report
+                    script {
+                        if (fileExists('htmlcov/index.html')) {
+                            publishHTML([
+                                reportDir: 'htmlcov',
+                                reportFiles: 'index.html',
+                                reportName: 'Test Coverage Report'
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Verify Application') {
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                }
+            }
+            steps {
+                sh '''
+                    pip install -r requirements.txt
+                    timeout 10 python app.py &
+                    sleep 3
+                    curl -f http://localhost:8080/ping || exit 1
+                    pkill -f "python app.py" || true
+                '''
+            }
+        }
+        
+        stage('Build Docker Image') {
+            when {
+                expression { params.BUILD_DOCKER && fileExists('Dockerfile') }
+            }
+            steps {
+                script {
+                    def customImage = docker.build("${DOCKER_IMAGE}")
+                    echo "Docker image built: ${DOCKER_IMAGE}"
+                    // Uncomment to push to registry:
+                    // docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                    //     customImage.push()
+                    //     customImage.push("latest")
+                    // }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                expression { params.DEPLOY_ENV != 'none' }
+            }
+            steps {
+                script {
+                    echo "Deploying ${APP_NAME} to ${params.DEPLOY_ENV}"
+                    if (params.DEPLOY_ENV == 'production') {
+                        input message: "Deploy to production?", ok: 'Deploy'
+                    }
+                    // Add your deployment logic here
+                    // Example: kubectl, docker-compose, etc.
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'pkill -f "python app.py" || true'
+            cleanWs()
+        }
+        success {
+            echo "✅ Build #${BUILD_NUMBER} completed successfully!"
+            echo "Git commit: ${env.GIT_COMMIT_SHORT}"
+        }
+        failure {
+            echo "❌ Build #${BUILD_NUMBER} failed!"
+            echo "Check test results and logs for details."
+        }
+        unstable {
+            echo "⚠️ Build #${BUILD_NUMBER} is unstable"
+        }
+    }
+}
+

@@ -1,0 +1,31 @@
+// Lab 8: Complete CI/CD Pipeline
+//
+// Instructions:
+// Create a complete pipeline that:
+//   1. Uses Docker agent with image 'node:18-alpine'
+//   2. Defines environment variable NODE_ENV = 'production'
+//   3. Has stages: Checkout, Install, Test, Build
+//   4. Has post actions: always (cleanup message), success (success message)
+//
+// Note: In a real scenario, you would use 'checkout scm' for the Checkout stage
+//
+// TODO: Complete the pipeline below
+
+pipeline {
+    // TODO: Add Docker agent
+    
+    // TODO: Add environment block
+    
+    stages {
+        // TODO: Add Checkout stage (use echo for now, in real scenario use 'checkout scm')
+        
+        // TODO: Add Install stage (use echo 'npm install' for now)
+        
+        // TODO: Add Test stage (use echo 'npm test' for now)
+        
+        // TODO: Add Build stage (use echo 'npm run build' for now)
+    }
+    
+    // TODO: Add post block
+}
+

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linux-system-manager"
+version = "2.0.0"
+description = "A modular DevOps automation toolkit for Linux system management"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+authors = [
+    {name = "DevOps Automation Team"}
+]
+urls = {Homepage = "https://github.com/devops101/linux-system-manager"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "Topic :: System :: Systems Administration",
+    "Topic :: System :: Monitoring",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+
+[project.optional-dependencies]
+enhanced = [
+    "psutil>=5.8.0",
+]
+
+[project.scripts]
+linux-system-manager = "advanced.linux_system_manager:main"
+lsm = "advanced.linux_system_manager:main"
+lsm-health-check = "advanced.health_check:main"
+lsm-cleanup-logs = "advanced.cleanup_logs:main"
+lsm-disk-cleanup = "advanced.disk_cleanup:main"
+lsm-service-status = "advanced.service_status:main"
+lsm-user-audit = "advanced.user_audit:main"
+lsm-backup-config = "advanced.backup_config:main"
+lsm-full-report = "advanced.full_report:main"
+
+[tool.setuptools]
+packages = ["advanced"]
+package-dir = {advanced = "."}
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.package-data]
+advanced = ["README.md"]
+

@@ -1,0 +1,20 @@
+// Scripted Pipeline Example 2: Multiple Stages
+// Scripted pipelines use Groovy control structures for stages
+
+node {
+    stage('Build') {
+        echo 'Building the application...'
+        sh 'echo "Build stage completed"'
+    }
+    
+    stage('Test') {
+        echo 'Running tests...'
+        sh 'echo "Test stage completed"'
+    }
+    
+    stage('Deploy') {
+        echo 'Deploying the application...'
+        sh 'echo "Deploy stage completed"'
+    }
+}
+

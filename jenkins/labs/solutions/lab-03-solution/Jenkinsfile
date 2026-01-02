@@ -1,0 +1,18 @@
+// Lab 3 Solution: Docker Agent Pipeline
+pipeline {
+    agent {
+        docker {
+            image 'node:18-alpine'
+        }
+    }
+    
+    stages {
+        stage('Check') {
+            steps {
+                sh 'node --version'
+                sh 'npm --version'
+            }
+        }
+    }
+}
+

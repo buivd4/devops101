@@ -1,0 +1,11 @@
+// Scripted Pipeline Example 4: Docker Agent
+// Using Docker containers in Scripted Pipelines
+
+docker.image('node:18-alpine').inside {
+    stage('Check') {
+        sh 'node --version'
+        sh 'npm --version'
+        echo 'Running in Docker container'
+    }
+}
+

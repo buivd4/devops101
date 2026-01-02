@@ -1,0 +1,22 @@
+# Environment files
+.env
+
+# Docker volumes data (if mounted locally)
+jenkins_home/
+agent1_work/
+agent2_work/
+registry_data/
+
+# Backup files
+*.tar.gz
+*.backup
+
+# Logs
+*.log
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+

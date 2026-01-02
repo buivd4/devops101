@@ -1,0 +1,119 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.master
+    container_name: jenkins-master
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins-config.yaml:/usr/share/jenkins/ref/jenkins-config.yaml:ro
+      - ./jobs:/usr/share/jenkins/ref/jobs:ro
+      - ./plugins.txt:/usr/share/jenkins/ref/plugins.txt:ro
+    environment:
+      - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        if [ -f /usr/share/jenkins/ref/plugins.txt ]; then
+          echo "Installing plugins from plugins.txt..."
+          jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+        fi
+        exec /usr/bin/tini -- /usr/local/bin/jenkins.sh
+    networks:
+      - jenkins-network
+    depends_on:
+      - docker-registry
+    restart: unless-stopped
+
+  jenkins-agent-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    container_name: jenkins-agent-1
+    privileged: true
+    ports:
+      - "2222:22"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - agent1_work:/home/jenkins/agent
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_AGENT_NAME=agent-1
+      - JENKINS_AGENT_SECRET=${JENKINS_AGENT_SECRET:-}
+    networks:
+      - jenkins-network
+    depends_on:
+      - jenkins
+    restart: unless-stopped
+
+  jenkins-agent-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    container_name: jenkins-agent-2
+    privileged: true
+    ports:
+      - "2223:22"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - agent2_work:/home/jenkins/agent
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_AGENT_NAME=agent-2
+      - JENKINS_AGENT_SECRET=${JENKINS_AGENT_SECRET:-}
+    networks:
+      - jenkins-network
+    depends_on:
+      - jenkins
+    restart: unless-stopped
+
+  docker-registry:
+    image: registry:2
+    container_name: docker-registry
+    # ports:
+    #   - "5000:5000"
+    volumes:
+      - registry_data:/var/lib/registry
+      - ./registry-config.yml:/etc/docker/registry/config.yml:ro
+    networks:
+      - jenkins-network
+    restart: unless-stopped
+
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    ports:
+      - "3000:3000"
+      - "2224:22"
+    volumes:
+      - gitea_data:/data
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=sqlite3
+      - GITEA__database__PATH=/data/gitea/gitea.db
+      - GITEA__server__DOMAIN=localhost
+      - GITEA__server__SSH_DOMAIN=localhost
+      - GITEA__server__SSH_PORT=2224
+      - GITEA__server__HTTP_PORT=3000
+    networks:
+      - jenkins-network
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+  agent1_work:
+  agent2_work:
+  registry_data:
+  gitea_data:
+
+networks:
+  jenkins-network:
+    driver: bridge
+

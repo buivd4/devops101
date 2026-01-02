@@ -1,0 +1,84 @@
+pipeline {
+    agent {
+        docker {
+            image 'python:3.11-slim'
+        }
+    }
+    
+    environment {
+        PYTHONUNBUFFERED = '1'
+        APP_NAME = 'python-example'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo 'Source code checked out successfully'
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Lint') {
+            steps {
+                script {
+                    try {
+                        sh 'pip install flake8 && flake8 app.py --max-line-length=120 || true'
+                    } catch (Exception e) {
+                        echo "Linting warnings (non-blocking): ${e.message}"
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                sh 'pytest test_app.py -v --tb=short'
+            }
+            post {
+                always {
+                    script {
+                        // Publish test results if pytest generates JUnit XML
+                        sh 'pytest test_app.py --junitxml=test-results.xml || true'
+                        if (fileExists('test-results.xml')) {
+                            junit 'test-results.xml'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Verify Application') {
+            steps {
+                sh '''
+                    python app.py &
+                    sleep 3
+                    curl -f http://localhost:8080/ping || exit 1
+                    pkill -f "python app.py" || true
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'pkill -f "python app.py" || true'
+            cleanWs()
+        }
+        success {
+            echo 'Python application build and tests completed successfully!'
+        }
+        failure {
+            echo 'Python build or tests failed. Please check the logs.'
+        }
+    }
+}
+

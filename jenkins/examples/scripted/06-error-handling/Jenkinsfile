@@ -1,0 +1,30 @@
+// Scripted Pipeline Example 6: Error Handling
+// Using try-catch blocks for error handling in Scripted Pipelines
+
+node {
+    stage('Build') {
+        try {
+            echo 'Building application...'
+            sh 'echo "Build successful"'
+        } catch (Exception e) {
+            echo "Build failed: ${e.message}"
+            currentBuild.result = 'FAILURE'
+            throw e
+        }
+    }
+    
+    stage('Test') {
+        try {
+            echo 'Running tests...'
+            sh 'echo "Tests passed"'
+        } catch (Exception e) {
+            echo "Tests failed: ${e.message}"
+            currentBuild.result = 'UNSTABLE'
+        }
+    }
+    
+    stage('Notify') {
+        echo "Build status: ${currentBuild.result}"
+    }
+}
+

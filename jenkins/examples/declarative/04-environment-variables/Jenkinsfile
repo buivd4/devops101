@@ -1,0 +1,22 @@
+pipeline {
+    agent any
+    
+    environment {
+        NODE_ENV = 'production'
+        APP_VERSION = '1.0.0'
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Environment') {
+            steps {
+                echo "Node Environment: ${NODE_ENV}"
+                echo "App Version: ${APP_VERSION}"
+                echo "Build Number: ${BUILD_NUMBER}"
+                echo "Job Name: ${env.JOB_NAME}"
+                echo "Build URL: ${env.BUILD_URL}"
+            }
+        }
+    }
+}
+

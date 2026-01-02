@@ -1,0 +1,48 @@
+FROM jenkins/jenkins:2.479.3-lts-jdk17
+
+# Switch to root to install Docker
+USER root
+
+# Install required packages for Docker installation
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    ca-certificates \
+    gnupg \
+    lsb-release && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI from official Docker repository
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create docker group (if it doesn't exist) with GID 999 (common Docker group GID)
+# This ensures compatibility with the host's docker group
+# docker-ce-cli doesn't create the docker group, so we create it explicitly
+RUN if ! getent group docker > /dev/null 2>&1; then \
+      groupadd -g 999 docker; \
+    fi
+
+# Add jenkins user to docker group and verify docker installation
+# The jenkins user is created by the base image with UID 1000
+RUN usermod -aG docker jenkins && \
+    echo "Docker installation verification:" && \
+    docker --version && \
+    which docker && \
+    ls -la /usr/bin/docker && \
+    echo "Docker group info:" && \
+    getent group docker
+
+# Switch back to jenkins user (default user for Jenkins image)
+USER jenkins
+
