@@ -241,7 +241,12 @@ Solution files for all labs are available in `labs/solutions/` directory. These 
 
 ### Prerequisites
 
-1. **Jenkins Installation**: You need a Jenkins instance running. You can install Jenkins using:
+1. **Jenkins Installation**: You need a Jenkins instance running. Options include:
+   - **Recommended**: Use the complete setup in `setup/` directory (see `setup/README.md`)
+     - Includes Jenkins master with Docker support
+     - Pre-configured agents with Docker CLI
+     - Docker registry for image storage
+     - All plugins pre-installed via JCasC
    - Docker: `docker run -p 8080:8080 jenkins/jenkins:lts`
    - System package (Ubuntu/Debian): `sudo apt install jenkins`
    - WAR file: Download from [jenkins.io](https://www.jenkins.io/download/)
@@ -250,6 +255,13 @@ Solution files for all labs are available in `labs/solutions/` directory. These 
    - Pipeline (usually pre-installed)
    - Docker Pipeline (for Docker agent examples)
    - Git (for SCM integration)
+   
+   **Note**: If using the `setup/` directory setup, all required plugins are automatically installed.
+
+3. **Docker Requirements** (for Docker agent examples):
+   - Docker Engine installed and running
+   - Docker socket accessible (if using the `setup/` directory, this is configured automatically)
+   - For Docker agent examples, ensure your Jenkins agents have Docker CLI installed
 
 ### Running Examples
 

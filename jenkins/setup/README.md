@@ -8,26 +8,44 @@ This directory contains a complete Jenkins setup with:
 ## Architecture
 
 ```
-┌─────────────────┐
-│  Jenkins Master │ (Port 8080)
-│   (JCasC)       │
-└────────┬────────┘
-         │
-         ├─────────────────┬─────────────────┐
-         │                 │                 │
-┌────────▼────────┐ ┌──────▼──────┐  ┌──────▼──────┐
-│ Jenkins Agent 1 │ │Jenkins Agent│  │  Docker     │
-│                 │ │     2       │  │  Registry   │
-│ (Docker ready)  │ │(Docker ready)│  │  (Port 5000)│
-└─────────────────┘ └─────────────┘  └─────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    Host Docker Daemon                   │
+│              /var/run/docker.sock                        │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+        ┌───────────────┼───────────────┐
+        │               │               │
+┌───────▼──────┐  ┌─────▼──────┐  ┌─────▼──────┐
+│ Jenkins      │  │ Agent 1    │  │ Agent 2    │
+│ Master       │  │ (SSH:2222) │  │ (SSH:2223) │
+│ (Port 8080)  │  │            │  │            │
+│              │  │ Docker CLI  │  │ Docker CLI │
+│ Docker CLI   │  │ Socket      │  │ Socket     │
+│ Socket       │  │ Mounted     │  │ Mounted    │
+└──────────────┘  └─────────────┘  └────────────┘
+        │
+        └───────────────┐
+                        │
+                ┌───────▼───────┐
+                │ Docker        │
+                │ Registry      │
+                │ (Port 5000)   │
+                └───────────────┘
 ```
+
+**Key Features:**
+- All containers have Docker CLI installed
+- Docker socket mounted from host to all containers
+- Agents can build and push Docker images
+- Docker registry for storing container images
 
 ## Prerequisites
 
-- Docker Engine 20.10+
+- Docker Engine 20.10+ (with Docker daemon running)
 - Docker Compose 2.0+
 - 4GB+ RAM recommended
-- Ports 8080, 5000, 50000 available
+- Ports 8080, 50000, 2222, 2223 available
+- Docker socket accessible at `/var/run/docker.sock` (default Docker installation)
 
 ## Quick Start
 
@@ -47,19 +65,27 @@ This directory contains a complete Jenkins setup with:
    ```
    Look for: `Jenkins is fully up and running`
 
-4. **Install plugins (if not auto-installed):**
+4. **Verify agents are connected:**
    ```bash
-   ./install-plugins.sh
-   docker-compose restart jenkins
+   docker-compose logs jenkins | grep -i "agent"
    ```
-   Or install manually via: **Manage Jenkins** → **Manage Plugins** → **Available**
+   Or check in Jenkins UI: **Manage Jenkins** → **Nodes**
 
 5. **Access Jenkins:**
    - URL: http://localhost:8080
    - Default credentials: `admin` / `admin` (configured via JCasC)
 
-6. **Access Docker Registry:**
-   - URL: http://localhost:5000
+6. **Verify Docker is working:**
+   ```bash
+   # Test Docker on master
+   docker-compose exec jenkins docker --version
+   
+   # Test Docker on agent
+   docker-compose exec -u jenkins jenkins-agent-1 docker --version
+   ```
+
+7. **Access Docker Registry:**
+   - URL: http://localhost:5000 (if port is exposed)
    - Test: `curl http://localhost:5000/v2/_catalog`
 
 ## Services
@@ -70,22 +96,29 @@ This directory contains a complete Jenkins setup with:
 - **Plugins**: Auto-installed via JCasC
 - **Credentials**: Pre-configured for agents
 - **No setup wizard**: Disabled for automated setup
+- **Docker**: Docker CLI installed with socket mounted
+- **Docker Socket**: `/var/run/docker.sock` mounted from host
 
 ### Jenkins Agents
 - **Agent 1**: `jenkins-agent-1`
   - Labels: `docker agent-1`
   - Executors: 2
   - Docker enabled
+  - SSH Port: 2222
   
 - **Agent 2**: `jenkins-agent-2`
   - Labels: `docker agent-2`
   - Executors: 2
   - Docker enabled
+  - SSH Port: 2223
 
 Both agents:
-- Have Docker CLI installed
-- Connected via SSH
+- Have Docker CLI installed from official Docker repository
+- Docker socket mounted from host (`/var/run/docker.sock`)
+- Connected via SSH with non-verifying host key strategy
+- Docker group GID automatically adjusted at startup to match host
 - Can build and push Docker images
+- Run in privileged mode for Docker access
 
 ### Docker Registry
 - **Port**: 5000
@@ -108,9 +141,17 @@ JCasC configuration file containing:
 
 ### `Dockerfile.agent`
 Custom agent image with:
-- Docker CLI
-- Git
-- Additional build tools
+- Docker CLI (installed from official Docker repository)
+- Git, curl, wget, and other build tools
+- SSH server for Jenkins agent connection
+- Automatic Docker group GID adjustment at startup
+- Java symlink for Jenkins SSH launcher
+
+### `Dockerfile.master`
+Custom Jenkins master image with:
+- Docker CLI (installed from official Docker repository)
+- Docker socket access configured
+- Jenkins user added to docker group
 
 ### `registry-config.yml`
 Docker registry configuration for local development.
@@ -240,15 +281,29 @@ docker pull localhost:5000/myapp:latest
    docker-compose logs jenkins-agent-2
    ```
 
-2. **Verify SSH credentials in JCasC:**
+2. **Verify SSH is running on agents:**
    ```bash
-   docker-compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+   docker-compose exec jenkins-agent-1 ps aux | grep sshd
    ```
 
-3. **Check Jenkins master logs:**
+3. **Test SSH connection:**
+   ```bash
+   ssh -p 2222 jenkins@localhost
+   # Password: jenkins
+   ```
+
+4. **Check Jenkins master logs:**
    ```bash
    docker-compose logs jenkins | grep -i agent
    ```
+
+5. **Verify SSH host key verification is disabled:**
+   - Check `jenkins-config.yaml` for `nonVerifyingKeyVerificationStrategy`
+   - This is already configured for both agents
+
+6. **Check agent connectivity in Jenkins UI:**
+   - Go to **Manage Jenkins** → **Nodes**
+   - Check agent status and connection logs
 
 ### Jenkins Won't Start
 
@@ -287,15 +342,40 @@ docker pull localhost:5000/myapp:latest
 
 ### Docker Build Fails in Pipeline
 
-1. **Verify Docker socket is mounted** (already in docker-compose.yml)
-2. **Check agent has Docker:**
+1. **Verify Docker socket is mounted** (already in docker-compose.yml):
+   ```bash
+   docker-compose exec jenkins-agent-1 ls -la /var/run/docker.sock
+   ```
+
+2. **Check agent has Docker CLI:**
    ```bash
    docker-compose exec jenkins-agent-1 docker --version
    ```
 
-3. **Test Docker command:**
+3. **Test Docker command as jenkins user:**
    ```bash
-   docker-compose exec jenkins-agent-1 docker ps
+   docker-compose exec -u jenkins jenkins-agent-1 docker ps
+   ```
+
+4. **Check Docker group GID matches host:**
+   ```bash
+   # On host
+   stat -c %g /var/run/docker.sock
+   
+   # In container
+   docker-compose exec jenkins-agent-1 getent group docker
+   ```
+   The GIDs should match. The startup script automatically adjusts this.
+
+5. **Verify jenkins user is in docker group:**
+   ```bash
+   docker-compose exec jenkins-agent-1 groups jenkins
+   ```
+   Should show `docker` in the output.
+
+6. **Check container logs for Docker permission errors:**
+   ```bash
+   docker-compose logs jenkins-agent-1 | grep -i docker
    ```
 
 ## Data Persistence
@@ -335,19 +415,54 @@ docker-compose down -v
 docker-compose rm -f
 ```
 
+## Docker Configuration Details
+
+### Docker Installation
+- **Master**: Docker CLI installed from official Docker repository
+- **Agents**: Docker CLI installed from official Docker repository
+- **Socket Mounting**: `/var/run/docker.sock` mounted from host to all containers
+- **Permissions**: Automatic GID matching at container startup
+
+### How Docker Works in This Setup
+1. Docker socket is mounted from the host into Jenkins master and agents
+2. Containers can execute Docker commands that run on the host Docker daemon
+3. Docker group GID is automatically adjusted at startup to match host permissions
+4. Jenkins user is added to docker group for proper access
+
+### Testing Docker Access
+```bash
+# Test on Jenkins master
+docker-compose exec jenkins docker ps
+
+# Test on agent as jenkins user
+docker-compose exec -u jenkins jenkins-agent-1 docker ps
+
+# Test Docker build capability
+docker-compose exec -u jenkins jenkins-agent-1 docker build --help
+```
+
 ## Security Notes
 
 ⚠️ **This setup is for development/learning only!**
 
+Security considerations:
+- **Docker Socket Access**: Mounting Docker socket gives containers full access to host Docker daemon
+- **Privileged Mode**: Agents run in privileged mode for Docker access
+- **SSH Host Key Verification**: Disabled for convenience (non-verifying strategy)
+- **Default Passwords**: Using default credentials (`admin/admin`, `jenkins/jenkins`)
+
 For production:
 - Enable HTTPS/TLS
-- Use proper authentication
+- Use proper authentication and strong passwords
 - Configure firewall rules
-- Use secrets management
+- Use secrets management (HashiCorp Vault, AWS Secrets Manager, etc.)
 - Enable audit logging
 - Regular security updates
 - Network isolation
 - Resource limits
+- Consider Docker-in-Docker (DinD) instead of socket mounting
+- Enable SSH host key verification
+- Use SSH keys instead of passwords
 
 ## Additional Resources
 
