@@ -54,3 +54,6 @@ print("\nMission status:")
 for system, status in mission_status.items():
     print(f"  {system}: {status}")
 
+
+
+

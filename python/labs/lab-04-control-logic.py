@@ -37,3 +37,6 @@ fuel_level = 85  # You can change this to test different levels
 
 print("Lab 4 completed!")
 
+
+
+

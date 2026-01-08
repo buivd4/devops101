@@ -48,3 +48,6 @@ print(f"\nEven numbers squared: {even_squares}")
 crew_roles = {name: f"Astronaut-{i+1}" for i, name in enumerate(crew)}
 print(f"Crew roles: {crew_roles}")
 
+
+
+

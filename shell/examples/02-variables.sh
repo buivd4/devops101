@@ -23,3 +23,6 @@ echo "Current user: $USER"
 echo "Home directory: $HOME"
 
 
+
+
+

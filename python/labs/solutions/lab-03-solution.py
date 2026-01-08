@@ -33,3 +33,6 @@ print(f"Status: {status}")
 
 print("Lab 3 completed!")
 
+
+
+

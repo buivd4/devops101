@@ -37,3 +37,6 @@ print(f"Type of mission_name: {type(mission_name)}")
 print(f"Type of fuel_amount: {type(fuel_amount)}")
 print(f"Type of is_ready: {type(is_ready)}")
 
+
+
+

@@ -27,3 +27,6 @@ print("=== Lab 5: Functions ===")
 
 print("Lab 5 completed!")
 
+
+
+

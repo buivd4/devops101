@@ -29,3 +29,6 @@ print("=== Lab 1: Basic Script ===")
 
 print("Lab 1 completed!")
 
+
+
+

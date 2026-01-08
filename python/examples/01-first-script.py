@@ -18,3 +18,6 @@ print(f"Current date and time: {current_time}")
 username = os.getenv('USER', 'Unknown')
 print(f"Current user: {username}")
 
+
+
+

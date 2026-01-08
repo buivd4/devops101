@@ -24,3 +24,6 @@ echo "My favorite color is ${favorite_color} and my favorite number is ${favorit
 echo "Lab 2 completed!"
 
 
+
+
+

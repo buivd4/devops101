@@ -37,3 +37,6 @@ print(f"Square of 7: {result}")
 
 print("Lab 5 completed!")
 
+
+
+

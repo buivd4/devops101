@@ -30,3 +30,6 @@ print("=== Lab 2: Variables ===")
 
 print("Lab 2 completed!")
 
+
+
+

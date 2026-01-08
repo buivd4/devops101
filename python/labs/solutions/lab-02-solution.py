@@ -32,3 +32,6 @@ print(f"\nMission data: {mission_data}")
 
 print("Lab 2 completed!")
 
+
+
+
