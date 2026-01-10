@@ -31,7 +31,6 @@
 # [2024-01-15 14:30:45] WARNING: CPU Usage: 85.23%, Memory Usage: 82.15%
 # [2024-01-15 14:30:50] WARNING: CPU Usage: 88.50%, Memory Usage: 81.20%
 
-import platform
 import subprocess
 import time
 from datetime import datetime
