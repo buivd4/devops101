@@ -9,7 +9,6 @@ from datetime import datetime
 
 
 def get_cpu_usage():
-    """Get CPU usage percentage. Returns None if unable to determine."""
     try:
         # Try using psutil if available (most reliable)
         try:
@@ -58,7 +57,6 @@ def get_cpu_usage():
 
 
 def get_memory_usage():
-    """Get memory usage percentage. Returns None if unable to determine."""
     try:
         # Try using psutil if available (most reliable)
         try:
@@ -117,7 +115,6 @@ def get_memory_usage():
 
 
 def log_to_file(cpu_usage, memory_usage):
-    """Log monitoring information to monitoring.log file."""
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     # Format the log entry
@@ -131,7 +128,7 @@ def log_to_file(cpu_usage, memory_usage):
         f.write(log_entry)
     
     # Also print to console
-    print(f"⚠️  {log_entry.strip()}")
+    print(f"{log_entry.strip()}")
 
 
 def main():
@@ -147,20 +144,14 @@ def main():
             memory_usage = get_memory_usage()
             
             # Check if thresholds are exceeded
-            cpu_exceeded = cpu_usage is not None and cpu_usage > 80
-            memory_exceeded = memory_usage is not None and memory_usage > 80
+            cpu_exceeded = cpu_usage is not None and cpu_usage > 10
+            memory_exceeded = memory_usage is not None and memory_usage > 10
             
-            # Log if either threshold is exceeded
             if cpu_exceeded or memory_exceeded:
                 log_to_file(cpu_usage, memory_usage)
             else:
-                # Optional: Print normal status (commented out to reduce noise)
-                # cpu_str = f"{cpu_usage:.2f}%" if cpu_usage is not None else "N/A"
-                # mem_str = f"{memory_usage:.2f}%" if memory_usage is not None else "N/A"
-                # print(f"[{datetime.now().strftime('%H:%M:%S')}] CPU: {cpu_str}, Memory: {mem_str} - OK")
                 pass
             
-            # Wait before next check (check every 5 seconds)
             time.sleep(5)
             
     except KeyboardInterrupt:
