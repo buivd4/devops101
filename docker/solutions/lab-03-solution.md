@@ -233,4 +233,4 @@ docker compose down -v
 
 ---
 
-**Congratulations!** You've successfully set up a complete CI/CD stack with Jenkins, Gitea, and Docker Registry using Docker Compose.
+**Congratulations!** You've successfully set up a complete CI/CD stack with Jenkins, Gitea, and Docker Registry using Docker Compose
