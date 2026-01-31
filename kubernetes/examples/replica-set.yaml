@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: devops-101-rc
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      type: nginx
+  template:
+    metadata:
+      labels:
+        type: nginx
+        app : nginx-pod
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
