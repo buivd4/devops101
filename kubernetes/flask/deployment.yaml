@@ -14,5 +14,5 @@ spec:
     spec:
       containers:
       - name: flask
-        image: python-flask:latest
+        image: python-flask:v1.0
         imagePullPolicy: Never
