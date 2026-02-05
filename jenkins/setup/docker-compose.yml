@@ -76,8 +76,8 @@ services:
   docker-registry:
     image: registry:2
     container_name: docker-registry
-    # ports:
-    #   - "5000:5000"
+    ports:
+      - "5050:5000"
     volumes:
       - registry_data:/var/lib/registry
       - ./registry-config.yml:/etc/docker/registry/config.yml:ro
@@ -102,6 +102,7 @@ services:
       - GITEA__server__SSH_DOMAIN=localhost
       - GITEA__server__SSH_PORT=2224
       - GITEA__server__HTTP_PORT=3000
+      - GITEA__webhook__ALLOWED_HOST_LIST=*
     networks:
       - jenkins-network
     restart: unless-stopped
