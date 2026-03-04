@@ -2,6 +2,9 @@
   "name": "example-frontend",
   "version": "0.1.0",
   "private": true,
+  "devDependencies": {
+    "eslint": "^7.32.0"
+  },
   "dependencies": {
     "@material-ui/core": "^4.11.2",
     "@material-ui/icons": "^4.11.2",
@@ -12,7 +15,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "lint": "eslint src --max-warnings 0"
   },
   "eslintConfig": {
     "extends": [
